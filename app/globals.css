@@ -169,10 +169,15 @@ a {
 
 /* ---------- layout ---------- */
 
+/*
+ * `.app` is only `min-height: 100dvh`, so `.app__main` has no definite height
+ * and a percentage here would collapse to content height — which cropped the
+ * board to a sliver. Size against the viewport minus the header instead.
+ */
 .stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--panel-width);
-  height: 100%;
+  height: calc(100dvh - var(--header-h));
 }
 
 .stage__board {

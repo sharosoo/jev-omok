@@ -3,7 +3,7 @@ import type { EndReason, Seat, ServerErrorCode } from "@/game/realtime";
 
 export const APP_TITLE = "3D 오목";
 export const APP_DESCRIPTION =
-  "3D 바둑판에서 말하는 AI와 대국하거나 실시간으로 다른 사람과 겨뤄보세요. 흑돌을 잡고 먼저 시작하세요.";
+  "3D 바둑판에서 말을 건네는 AI와 두거나 실시간으로 다른 사람과 맞붙습니다. 흑을 잡고 먼저 둡니다.";
 
 /**
  * What the AI says after it moves. Jev picks the LineId; the worker picks one
@@ -182,8 +182,8 @@ export const UI: {
     label: "규칙",
     names: { freestyle: "자유 룰", double_three_ban: "33 금수" },
     help: {
-      freestyle: "금수 없이 돌을 5개 이상 연속으로 놓으면 승리합니다.",
-      double_three_ban: "흑백 모두 열린 3을 동시에 두 개 만드는 수(33)가 금지됩니다.",
+      freestyle: "금수 없이 돌 5개 이상을 먼저 이으면 이깁니다.",
+      double_three_ban: "한 번에 3이 두 개 생기는 자리는 흑백 모두 둘 수 없습니다.",
     },
   },
   difficulty: {
@@ -217,20 +217,20 @@ export const UI: {
     bubble: "AI 말풍선. 마지막 착수에 대한 AI의 한마디입니다.",
   },
   landing: {
-    tagline: "3D 바둑판에서 말하는 AI와 대국하거나 실시간으로 다른 사람과 겨뤄보세요.",
+    tagline: "3D 바둑판에서 말을 건네는 AI와 가볍게 두거나, 실시간으로 다른 사람과 맞붙어 보세요.",
     nav: { play: "AI 대국", pvp: "실시간 대국", profile: "내 전적" },
     entries: {
       ai: {
         label: "AI 대국",
-        desc: "판세를 읽고 말을 건네는 AI와 언제든 혼자 둘 수 있습니다.",
+        desc: "수를 둘 때마다 말을 건네는 AI와 기다림 없이 바로 한판.",
       },
       pvp: {
         label: "실시간 대국",
-        desc: "대기 중인 상대와 바로 겨루거나, 방을 만들어 친구에게 코드를 보낼 수 있습니다.",
+        desc: "대기 중인 사람과 바로 맞붙거나 6자리 방 코드로 친구를 초대할 수 있습니다.",
       },
       profile: {
         label: "내 전적",
-        desc: "로그인하면 승패와 최근 대국 기록이 저장됩니다.",
+        desc: "로그인하면 승패와 최근 대국 기록이 차곡차곡 남습니다.",
       },
     },
     leaderboard: { title: "순위표", caption: "최다 승리를 기록한 상위 5명입니다." },
@@ -286,30 +286,30 @@ export const UI: {
   pvp: {
     lobby: {
       title: "온라인 대국",
-      subtitle: "다른 사람과 실시간으로 대국합니다. 흑이 먼저 두고 한 수당 제한 시간은 1분입니다.",
+      subtitle: "흑이 먼저 두고, 한 수에 1분씩.",
       homeLink: "처음으로",
       signedInAs: "접속 계정",
       guestLabel: "닉네임",
       guestPlaceholder: "오목꿈나무",
-      guestHint: "로그인하지 않아도 대국할 수 있지만, 전적은 저장되지 않습니다.",
+      guestHint: "로그인 없이 바로 둘 수 있지만 전적은 남지 않습니다.",
       guestFallbackName: "손님",
       quick: {
         title: "빠른 매칭",
-        help: "대기 중인 상대와 바로 연결합니다.",
+        help: "지금 기다리는 사람과 바로 한 판.",
         start: "상대 찾기",
-        searching: "상대를 찾는 중입니다…",
+        searching: "상대 찾는 중…",
         positionLabel: "대기 순번",
         cancel: "매칭 취소",
       },
       create: {
         title: "비공개 방",
-        help: "방을 만들고 친구에게 코드를 알려주세요.",
+        help: "방을 만들고 6자리 코드를 친구에게 보내세요.",
         action: "방 만들기",
         failed: "방을 만들지 못했습니다. 다시 시도해 주세요.",
       },
       join: {
         title: "코드로 입장",
-        help: "전달받은 6자리 코드를 입력하세요.",
+        help: "친구에게 받은 6자리 코드를 넣고 들어갑니다.",
         label: "참여 코드",
         placeholder: "AB12CD",
         action: "입장하기",
