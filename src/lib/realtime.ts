@@ -325,21 +325,36 @@ function openManaged<TIn, TOut>(spec: SocketSpec<TIn, TOut>): SocketHandle<TOut>
   };
 
   /*
-   * Every inbound frame wakes the Durable Object, so the heartbeat is the
-   * cheapest thing that still proves the socket is alive: one frame per 25 s,
-   * and none at all while the tab is in the background.
+   * One frame per 25 s. It must keep flowing while the tab is in the
+   * background: gating it on visibility let an idle socket be closed by the
+   * network, the room saw a disconnect, and switching tabs for a moment cost a
+   * player the game. A background tab throttles timers to about once a minute,
+   * which is still traffic, and 20 inbound frames cost one Durable Object
+   * request, so the price of being safe here is nil.
    */
   const ping = (): void => {
     if (spec.heartbeat === null || !live || gated) return;
-    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
     const now = Date.now();
     if (now - lastPingAt < HEARTBEAT_MS) return;
     lastPingAt = now;
     write(spec.heartbeat);
   };
 
+  /*
+   * Coming back to the tab is the moment to stop waiting out a backoff: the
+   * socket may have died while throttled, and the player is looking at a board
+   * they expect to be live.
+   */
   const onVisible = (): void => {
-    if (document.visibilityState === "visible") ping();
+    if (document.visibilityState !== "visible") return;
+    if (live) {
+      ping();
+      return;
+    }
+    if (disposed || retryTimer === null) return;
+    clearTimeout(retryTimer);
+    retryTimer = null;
+    connect();
   };
 
   const stopTimers = (): void => {

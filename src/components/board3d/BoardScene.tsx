@@ -40,6 +40,7 @@ export default function BoardScene({
   lastMove,
   winningLine,
   interactive,
+  seat = 1,
   forbidden,
   onPlace,
 }: Board3DProps) {
@@ -147,7 +148,12 @@ export default function BoardScene({
       {winningLine !== null && winStartedAt !== null && (
         <WinHighlight line={winningLine} startedAt={winStartedAt} reducedMotion={reducedMotion} />
       )}
-      <Interaction canPlace={canPlace} onPlace={onPlace} reducedMotion={reducedMotion} />
+      <Interaction
+        canPlace={canPlace}
+        onPlace={onPlace}
+        reducedMotion={reducedMotion}
+        seat={seat}
+      />
     </>
   );
 }

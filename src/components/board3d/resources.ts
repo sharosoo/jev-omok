@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 import { BOARD_SIZE } from "@/game/protocol";
+import type { Player } from "@/game/protocol";
 import {
   BOARD_EXTENT,
   BORDER_HALF_WIDTH,
@@ -278,10 +279,27 @@ export const getWhiteStoneMaterial = (): THREE.MeshPhysicalMaterial =>
     reflectivity: 0.45,
   }));
 
-let ghostMaterial: THREE.MeshPhysicalMaterial | undefined;
+let blackGhost: THREE.MeshPhysicalMaterial | undefined;
+let whiteGhost: THREE.MeshPhysicalMaterial | undefined;
 
-export const getGhostMaterial = (): THREE.MeshPhysicalMaterial =>
-  (ghostMaterial ??= new THREE.MeshPhysicalMaterial({
+/**
+ * Preview of the stone the local player is about to place, so it must match
+ * their own colour. A white seat previewing a black stone reads as a bug: the
+ * ghost lands and turns white.
+ */
+export const getGhostMaterial = (player: Player): THREE.MeshPhysicalMaterial => {
+  if (player === 2) {
+    return (whiteGhost ??= new THREE.MeshPhysicalMaterial({
+      color: "#f4eee1",
+      roughness: 0.3,
+      metalness: 0,
+      clearcoat: 1,
+      transparent: true,
+      opacity: 0.46,
+      depthWrite: false,
+    }));
+  }
+  return (blackGhost ??= new THREE.MeshPhysicalMaterial({
     color: "#15151a",
     roughness: 0.22,
     metalness: 0,
@@ -290,6 +308,7 @@ export const getGhostMaterial = (): THREE.MeshPhysicalMaterial =>
     opacity: 0.42,
     depthWrite: false,
   }));
+};
 
 const ringCache = new Map<string, THREE.RingGeometry>();
 

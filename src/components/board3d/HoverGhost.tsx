@@ -4,6 +4,8 @@ import { useFrame } from "@react-three/fiber";
 import { memo, useRef } from "react";
 import type * as THREE from "three";
 
+import type { Player } from "@/game/protocol";
+
 import {
   getGhostMaterial,
   getHoverRingMaterial,
@@ -30,10 +32,12 @@ export interface HoverGhostProps {
   column: number;
   row: number;
   reducedMotion: boolean;
+  /** Colour of the stone being previewed, i.e. the local player's seat. */
+  seat: Player;
 }
 
 /** Translucent preview of the human's stone plus a ring on the intersection. */
-const HoverGhost = memo(function HoverGhost({ column, row, reducedMotion }: HoverGhostProps) {
+const HoverGhost = memo(function HoverGhost({ column, row, reducedMotion, seat }: HoverGhostProps) {
   const stone = useRef<THREE.Mesh>(null);
   const shownAt = useRef(0);
   const shownKey = useRef(-1);
@@ -59,7 +63,7 @@ const HoverGhost = memo(function HoverGhost({ column, row, reducedMotion }: Hove
       <mesh
         ref={stone}
         geometry={ghostGeometry()}
-        material={getGhostMaterial()}
+        material={getGhostMaterial(seat)}
         position={[0, STONE_HALF_HEIGHT, 0]}
         dispose={null}
       />

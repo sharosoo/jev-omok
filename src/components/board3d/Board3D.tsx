@@ -3,7 +3,7 @@
 import { Canvas } from "@react-three/fiber";
 import { useEffect, useRef } from "react";
 
-import type { Cell, Coord } from "@/game/protocol";
+import type { Cell, Coord, Player } from "@/game/protocol";
 
 import BoardScene from "./BoardScene";
 import { VIEW_FOV } from "./scene";
@@ -19,6 +19,12 @@ export interface Board3DProps {
   interactive: boolean;
   /** Points the human is not allowed to play (33 금수), rendered as blocked. */
   forbidden?: readonly Coord[];
+  /**
+   * Which stone the local player holds. The hover preview is drawn in this
+   * colour, so a white seat never sees a black ghost land as a white stone.
+   * Defaults to black, which is the human's colour in the AI game.
+   */
+  seat?: Player;
   /** Fired with board coordinates when the human commits a placement. */
   onPlace: (coord: Coord) => void;
 }

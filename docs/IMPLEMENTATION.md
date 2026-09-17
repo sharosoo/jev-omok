@@ -24,7 +24,7 @@ how it was checked.
 | Match room (authoritative) | `src/worker/room.ts` | 17 protocol assertions in `scripts/test-pvp.mjs` against `wrangler dev` |
 | Matchmaking lobby | `src/worker/lobby.ts` | FIFO seats, tickets and reserved identities asserted in the same script |
 | Match records and stats | `migrations/0001_matches.sql`, D1 `DB` binding | finished guest match read back from local D1; `player_stats` correctly empty for guests |
-| Auth (worker side) | `src/worker/auth.ts`, `src/worker/index.ts` | `/api/me` 401 guest, `/api/players/:id` 404 unknown, `/api/leaderboard` 200 |
+| Auth (worker side) | `src/worker/auth.ts`, `src/worker/index.ts` | `/api/me` 401 guest, `/api/players/:id` 404 unknown |
 | Auth (browser side) | `src/lib/auth.ts` | 3 tests incl. the open-redirect guard; authorize URL carries PKCE, resource and scopes |
 | Landing, profile, header | `app/page.tsx`, `app/profile`, `src/components/{landing,account}` | rendered in a browser; landing ships no WebGL canvas |
 | PvP screens | `app/pvp`, `src/components/pvp`, `src/store/pvp.ts`, `src/lib/realtime.ts` | 17 tests; lobby rendered in a browser; `/pvp/ABC123` serves the room shell |

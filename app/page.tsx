@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { AuthControl } from "@/components/account/AuthControl";
 import { BoardMotif } from "@/components/landing/BoardMotif";
-import { Leaderboard } from "@/components/landing/Leaderboard";
 import { APP_TITLE, UI } from "@/lib/lines";
 
 /*
@@ -39,8 +38,6 @@ export default function LandingPage() {
           </Link>
         ))}
       </nav>
-
-      <Leaderboard />
     </main>
   );
 }

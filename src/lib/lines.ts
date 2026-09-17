@@ -59,7 +59,6 @@ export const UI: {
     tagline: string;
     nav: { play: string; pvp: string; profile: string };
     entries: Record<"ai" | "pvp" | "profile", { label: string; desc: string }>;
-    leaderboard: { title: string; caption: string };
   };
   auth: {
     signIn: string;
@@ -93,7 +92,7 @@ export const UI: {
     /** Counter suffixes: rendered as `${n}` + the string, so "3분 전". */
     ago: { now: string; minute: string; hour: string; day: string };
   };
-  /** Counter suffixes shared by the leaderboard and the profile tiles. */
+  /** Counter suffixes for the profile tiles. */
   stat: { win: string; loss: string; draw: string; move: string };
   pvp: {
     lobby: {
@@ -233,7 +232,6 @@ export const UI: {
         desc: "로그인하면 승패와 최근 대국이 기록됩니다.",
       },
     },
-    leaderboard: { title: "순위표", caption: "최다 승리를 기록한 상위 5명입니다." },
   },
   auth: {
     signIn: "로그인",

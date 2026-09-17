@@ -3,7 +3,7 @@
 import { useThree } from "@react-three/fiber";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
-import { BOARD_SIZE, type Coord } from "@/game/protocol";
+import { BOARD_SIZE, type Coord, type Player } from "@/game/protocol";
 
 import HoverGhost from "./HoverGhost";
 import PickPlane from "./PickPlane";
@@ -12,6 +12,7 @@ export interface InteractionProps {
   canPlace: (column: number, row: number) => boolean;
   onPlace: (coord: Coord) => void;
   reducedMotion: boolean;
+  seat: Player;
 }
 
 /**
@@ -22,6 +23,7 @@ const Interaction = memo(function Interaction({
   canPlace,
   onPlace,
   reducedMotion,
+  seat,
 }: InteractionProps) {
   const [hoverKey, setHoverKey] = useState<number | null>(null);
   const domElement = useThree((state) => state.gl.domElement);
@@ -52,7 +54,12 @@ const Interaction = memo(function Interaction({
     <>
       <PickPlane onHover={setHoverKey} onCommit={commit} />
       {hover !== null && (
-        <HoverGhost column={hover.column} row={hover.row} reducedMotion={reducedMotion} />
+        <HoverGhost
+          column={hover.column}
+          row={hover.row}
+          reducedMotion={reducedMotion}
+          seat={seat}
+        />
       )}
     </>
   );

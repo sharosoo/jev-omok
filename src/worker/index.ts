@@ -238,19 +238,6 @@ app.get("/api/players/:id", async (c) => {
   return c.json(body);
 });
 
-app.get("/api/leaderboard", async (c) => {
-  const requested = Number(c.req.query("limit") ?? 20);
-  const limit = Number.isFinite(requested) ? Math.min(50, Math.max(1, Math.trunc(requested))) : 20;
-  const result = await c.env.DB.prepare(
-    `SELECT * FROM player_stats
-     ORDER BY wins DESC, losses ASC, id ASC
-     LIMIT ?`,
-  )
-    .bind(limit)
-    .all<StatsRow>();
-  return c.json({ rows: result.results.map(playerStats) });
-});
-
 export { Lobby, MatchRoom };
 
 app.post("/api/move", async (c) => {

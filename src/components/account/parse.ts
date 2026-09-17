@@ -8,7 +8,6 @@
 import type { RuleSet } from "@/game/protocol";
 import type {
   EndReason,
-  LeaderboardResponse,
   MatchRecord,
   PlayerInfo,
   PlayerStats,
@@ -155,11 +154,3 @@ export const parseProfileResponse = (value: unknown): ProfileResponse | null => 
   return { player, stats: parsePlayerStats(value["stats"]), recent: rows };
 };
 
-export const parseLeaderboard = (value: unknown): LeaderboardResponse | null => {
-  if (!isRecord(value)) return null;
-  const rows = value["rows"];
-  if (!Array.isArray(rows)) return null;
-  return {
-    rows: rows.map(parsePlayerStats).filter((row): row is PlayerStats => row !== null),
-  };
-};

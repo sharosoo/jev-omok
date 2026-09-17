@@ -161,6 +161,3 @@ export interface ProfileResponse {
   readonly recent: readonly MatchRecord[];
 }
 
-export interface LeaderboardResponse {
-  readonly rows: readonly PlayerStats[];
-}

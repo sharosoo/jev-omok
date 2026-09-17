@@ -81,6 +81,7 @@ export function MatchScreen() {
           interactive={interactive}
           lastMove={lastMove}
           onPlace={place}
+          seat={role === "white" ? 2 : 1}
           winningLine={winningLine}
         />
       </section>
