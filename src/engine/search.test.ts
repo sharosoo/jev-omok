@@ -4,7 +4,8 @@ import { createBoard, fromNotation, toNotation } from "./rules";
 import { analyzePoints } from "./candidates";
 import { idx } from "./patterns";
 import { evaluateBoard, localScore } from "./evaluate";
-import { nearBest, searchMoves } from "./search";
+import { nearBest, searchMoves, type SearchLimits } from "./search";
+import { findVcf } from "./vcf";
 import type { Board } from "./types";
 
 const at = (text: string): Coord => {
@@ -20,7 +21,7 @@ function position(black: readonly string[], white: readonly string[]): Board {
   return board;
 }
 
-const LIMITS = { depth: 6, rootWidth: 12, innerWidth: 8, nodeLimit: 60_000 };
+const LIMITS: SearchLimits = { depth: 6, rootWidth: 12, innerWidth: 8, nodeLimit: 60_000 };
 
 const search = (board: Board, me: Player, limits = LIMITS) =>
   searchMoves(
@@ -122,5 +123,51 @@ describe("nearBest", () => {
     const board = position(["H8", "K10"], ["I9", "G7"]);
     const result = search(board, 2, { ...LIMITS, depth: 4 });
     expect(nearBest(result, 6_000, 12).length).toBeGreaterThan(1);
+  });
+});
+
+describe("cpu budget", () => {
+  /*
+   * A Worker on the free plan gets 10 ms of CPU for the whole request. Both
+   * searches must therefore be bounded by the clock, not only by a node count:
+   * production returned 15 `exceededResources` failures at a p99 of 514 ms CPU
+   * when `findVcf` re-analysed every candidate at every node.
+   */
+  it("findVcf stops within its time budget on a four-rich board", () => {
+    // The shape that used to explode: many four-making moves at every node.
+    const board = position(
+      ["H8", "I8", "J8", "H10", "I10", "F6", "G6", "K12"],
+      ["H9", "I9", "J9", "H11", "I11", "F7", "G7", "K13"],
+    );
+    const started = Date.now();
+    // A win reachable in one move is still returned — the clock must never
+    // throw away a win already in hand — but the search cannot run long.
+    findVcf(board, 2, "freestyle", 12, 0);
+    expect(Date.now() - started).toBeLessThan(50);
+  });
+
+  it("findVcf declines a deep line when the budget is spent", () => {
+    // White has nothing forcing, so any answer needs several plies of search.
+    const board = position(["H8", "I9", "J10"], ["G7", "F6", "M13"]);
+    expect(findVcf(board, 2, "freestyle", 12, 0)).toBeNull();
+  });
+
+  it("findVcf still finds a win when it has time", () => {
+    const board = position(["A1", "B1", "C1"], ["H8", "I8", "J8"]);
+    const result = findVcf(board, 2, "freestyle", 4);
+    expect(result).not.toBeNull();
+  });
+
+  it("searchMoves honours its millisecond budget", () => {
+    const board = position(
+      ["H8", "I9", "J10", "K8", "F6", "E5", "G12"],
+      ["I8", "J9", "G7", "H11", "E6", "D4", "F12"],
+    );
+    const started = Date.now();
+    const result = search(board, 2, { ...LIMITS, depth: 8, nodeLimit: 1_000_000, budgetMs: 4 });
+    const elapsed = Date.now() - started;
+    expect(result.moves.length).toBeGreaterThan(0);
+    // Generous headroom over the 4 ms budget; the point is that it is bounded.
+    expect(elapsed).toBeLessThan(60);
   });
 });

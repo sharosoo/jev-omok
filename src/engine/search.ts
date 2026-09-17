@@ -4,6 +4,8 @@ import { DIRS, idx, inBounds, makesFive } from "./patterns";
 import { isForbidden } from "./rules";
 import type { Board, PointAnalysis } from "./types";
 
+const DEFAULT_BUDGET_MS = 5;
+
 export interface SearchedMove {
   readonly coord: Coord;
   readonly score: number;
@@ -23,11 +25,18 @@ export interface SearchLimits {
   readonly rootWidth: number;
   readonly innerWidth: number;
   readonly nodeLimit: number;
+  /**
+   * Wall-clock ceiling in milliseconds. A node cap is not enough on its own:
+   * per-node cost grows with the board, and the whole request has 10 ms of CPU
+   * on the free plan. Production hit `exceededResources` before this existed.
+   */
+  readonly budgetMs?: number;
 }
 
 interface Frame {
   nodes: number;
   readonly limit: number;
+  readonly deadline: number;
   truncated: boolean;
 }
 
@@ -102,7 +111,9 @@ function negamax(
   frame: Frame,
 ): number {
   frame.nodes++;
-  if (frame.nodes >= frame.limit) {
+  // The clock is only read every 64th node, so Date.now() stays off the hot path.
+  const outOfTime = (frame.nodes & 63) === 0 && Date.now() > frame.deadline;
+  if (frame.nodes >= frame.limit || outOfTime) {
     frame.truncated = true;
     return me === 1 ? absScore : -absScore;
   }
@@ -180,7 +191,12 @@ export function searchMoves(
   candidates: readonly PointAnalysis[],
   limits: SearchLimits,
 ): SearchResult {
-  const frame: Frame = { nodes: 0, limit: limits.nodeLimit, truncated: false };
+  const frame: Frame = {
+    nodes: 0,
+    limit: limits.nodeLimit,
+    deadline: Date.now() + (limits.budgetMs ?? DEFAULT_BUDGET_MS),
+    truncated: false,
+  };
   const opponent: Player = me === 1 ? 2 : 1;
   const rootPool = candidates.map((c) => c.coord);
   const absScore = evaluateBoard(board);
