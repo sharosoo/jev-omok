@@ -3,7 +3,7 @@ import type { EndReason, Seat, ServerErrorCode } from "@/game/realtime";
 
 export const APP_TITLE = "3D 오목";
 export const APP_DESCRIPTION =
-  "3D 바둑판에서 말을 건네는 AI와 두거나 실시간으로 다른 사람과 맞붙습니다. 흑을 잡고 먼저 둡니다.";
+  "3D 바둑판에서 AI와 두거나 실시간으로 다른 사람과 맞붙어 보세요.";
 
 /**
  * What the AI says after it moves. Jev picks the LineId; the worker picks one
@@ -217,20 +217,20 @@ export const UI: {
     bubble: "AI 말풍선. 마지막 착수에 대한 AI의 한마디입니다.",
   },
   landing: {
-    tagline: "3D 바둑판에서 말을 건네는 AI와 가볍게 두거나, 실시간으로 다른 사람과 맞붙어 보세요.",
+    tagline: "AI와 두거나 실시간으로 다른 사람과 맞붙어 보세요.",
     nav: { play: "AI 대국", pvp: "실시간 대국", profile: "내 전적" },
     entries: {
       ai: {
         label: "AI 대국",
-        desc: "수를 둘 때마다 말을 건네는 AI와 기다림 없이 바로 한판.",
+        desc: "혼자서 AI와 바로 한 판.",
       },
       pvp: {
         label: "실시간 대국",
-        desc: "대기 중인 사람과 바로 맞붙거나 6자리 방 코드로 친구를 초대할 수 있습니다.",
+        desc: "대기 중인 사람과 바로, 또는 방 코드로 친구와.",
       },
       profile: {
         label: "내 전적",
-        desc: "로그인하면 승패와 최근 대국 기록이 차곡차곡 남습니다.",
+        desc: "로그인하면 승패와 최근 대국이 기록됩니다.",
       },
     },
     leaderboard: { title: "순위표", caption: "최다 승리를 기록한 상위 5명입니다." },
