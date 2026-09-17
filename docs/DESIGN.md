@@ -147,6 +147,25 @@ purely reactive game. Measured, against a greedy baseline opponent:
 Blocking is one legal answer to a three; a four of our own is another, and it
 seizes the tempo. Step 10 exists so the engine can find that.
 
+### Refutation filter
+
+Steps 10-11 alone still lost half the games against a club-level baseline (a
+baseline running the same forced ladder plus a greedy static pick), always to a
+five that had been visible for several moves. The cause was that nothing checked
+whether a candidate *holds*: blocking one end of an open three and blocking the
+end that survives look identical to a 1-ply evaluation, and Jev's confidence on
+quiet moves sits around 0.3, so the choice was close to a coin flip.
+
+So before the pool reaches Jev, every candidate in the first 8 is played out one
+ply and the opponent is asked the AI's own tactical questions — five, open four,
+fork, or a shallow VCF. Candidates that leave any of those standing are dropped.
+If all of them do, the position is already lost and the best-shaped move is kept.
+
+Cost measured on an 18-stone position: **0.65 ms per turn** for the whole
+pipeline including the filter, so it still fits the free plan's 10 ms CPU. The
+filter is gated on `vcfDepth > 0`, so beginner and easy keep missing things on
+purpose.
+
 ---
 
 ## 5. The Jev request

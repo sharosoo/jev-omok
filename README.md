@@ -63,7 +63,7 @@ curl -s localhost:8787/api/health   # {"ok":true,"jev":true,"board":15}
 ```bash
 printf '%s' "$TYPESAFE_API_KEY" | pnpm wrangler secret put TYPESAFE_API_KEY  # once
 set -a; source .env; set +a
-pnpm deploy        # next build && wrangler deploy
+pnpm run deploy    # next build && wrangler deploy ('pnpm deploy' is a reserved pnpm command)
 ```
 
 `wrangler.jsonc` binds the custom domain:
@@ -77,7 +77,18 @@ domain automatically. If `omok.sharosoo.com` already has a conflicting record
 (an old tunnel CNAME, for example), delete it first or the domain will not
 attach. A `Authentication error [10000]` at the end of a deploy usually means
 the API token lacks `Workers Routes:Edit` — the script upload itself has already
-succeeded at that point.
+succeeded at that point. The project's token hits exactly that, so the domain
+was attached once through the account-level API instead, which the same token
+is allowed to call:
+
+```bash
+curl -sX PUT "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/domains" \
+  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" \
+  -d '{"environment":"production","hostname":"omok.sharosoo.com","service":"jev-omok","zone_id":"<sharosoo.com zone id>"}'
+```
+
+Once attached it stays attached, so later deploys only need `pnpm run deploy`
+and the routes error at the end is cosmetic.
 
 ## Relationship to sharosoo-world
 

@@ -2,7 +2,7 @@ import type { Coord, Difficulty, LineId, MoveSource, Player, RuleSet } from "@/g
 import { analyzePoints, playable } from "./candidates";
 import { PROFILES, rng, sampleIndex } from "./difficulty";
 import { askJev, buildQuestions, buildState, isLineId, type PersonaKey } from "./jev";
-import { isFork } from "./patterns";
+import { idx, isFork } from "./patterns";
 import { fromNotation, toNotation } from "./rules";
 import type { Board, DifficultyProfile, PointAnalysis } from "./types";
 
@@ -205,6 +205,55 @@ function answersToThreat(
   return answers.length > 0 ? answers : null;
 }
 
+/**
+ * Rejects candidates that lose outright. For each candidate the position is
+ * played out one ply and the opponent is asked the same tactical questions the
+ * AI asks itself: can they complete five, build an open four, fork, or run a
+ * forced win by continuous fours? Anything that leaves one of those standing is
+ * a losing move no matter how good its shape looks.
+ *
+ * This is the difference between blocking an open three and blocking it on the
+ * end that actually holds. Without it the engine lost half its games to a
+ * club-level opponent, always to a five it had already been warned about.
+ *
+ * Cost is bounded deliberately: only the first `LOOKAHEAD_WIDTH` candidates are
+ * checked and the refutation search is shallow, because the whole turn has to
+ * fit in a Worker's CPU budget.
+ */
+const LOOKAHEAD_WIDTH = 8;
+const REFUTATION_DEPTH = 2;
+
+function survivingCandidates(
+  board: Board,
+  me: Player,
+  rule: RuleSet,
+  pool: readonly PointAnalysis[],
+  vcf: DecideOptions["vcf"],
+): readonly PointAnalysis[] {
+  const opponent: Player = me === 1 ? 2 : 1;
+  const safe: PointAnalysis[] = [];
+  const width = Math.min(pool.length, LOOKAHEAD_WIDTH);
+
+  for (let i = 0; i < width; i++) {
+    const candidate = pool[i] as PointAnalysis;
+    const cell = idx(candidate.coord.x, candidate.coord.y);
+    board[cell] = me;
+
+    const replies = analyzePoints(board, opponent, rule).filter((p) => !p.forbidden);
+    const immediate = replies.some(
+      (p) => p.offense.counts.five > 0 || p.offense.counts.openFour > 0 || isFork(p.offense.counts),
+    );
+    const forced = immediate ? null : vcf(board, opponent, rule, REFUTATION_DEPTH);
+
+    board[cell] = 0;
+    if (!immediate && !forced) safe.push(candidate);
+  }
+
+  // Every answer loses: the position is already lost, so keep the best-shaped
+  // move rather than returning nothing and letting the caller pick blindly.
+  return safe.length > 0 ? [...safe, ...pool.slice(width)] : pool;
+}
+
 /** Static pick, used for the weakest level and whenever Jev is unavailable. */
 function staticPick(
   candidates: readonly PointAnalysis[],
@@ -292,7 +341,14 @@ export async function decideMove(options: DecideOptions): Promise<Decision> {
 
   // When the opponent has an open three the pool shrinks to real answers, so
   // the judgment layer can still choose between blocking and counter-attacking.
-  const pool = answersToThreat(legal, profile, next) ?? legal;
+  const answers = answersToThreat(legal, profile, next) ?? legal;
+
+  // Only the levels that are meant to read ahead pay for the refutation search;
+  // beginner and easy are supposed to miss things.
+  const pool =
+    profile.vcfDepth > 0
+      ? survivingCandidates(board, me, rule, answers, options.vcf)
+      : answers;
   const candidates = pool.slice(0, profile.candidateLimit);
 
   if (profile.useJev && options.jev) {

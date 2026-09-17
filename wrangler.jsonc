@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "jev-omok",
-  "account_id": "<account-id>",
+  // account_id comes from CLOUDFLARE_ACCOUNT_ID in .env so the repo can be public.
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-09-17",
   "compatibility_flags": ["nodejs_compat"],
