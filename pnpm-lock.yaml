@@ -14,6 +14,9 @@ importers:
       '@react-three/fiber':
         specifier: ^9.7.0
         version: 9.7.0(@types/react@19.3.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(three@0.186.0)
+      '@sharosoo/auth-client':
+        specifier: ^0.3.0
+        version: 0.3.0(hono@4.13.8)
       hono:
         specifier: ^4.13.8
         version: 4.13.8
@@ -638,6 +641,15 @@ packages:
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
+  '@sharosoo/auth-client@0.3.0':
+    resolution: {integrity: sha512-re8Ykwwrk9T8lY1Y1LDz9j30K+5ujdEaCg6pkiYgibWr5rg0/+BfZj6yBC7hEn+4/lPRcSeRbcaI6UE7XN1lGw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      hono: ^4.12.14
+    peerDependenciesMeta:
+      hono:
+        optional: true
+
   '@sindresorhus/is@7.2.0':
     resolution: {integrity: sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw==}
     engines: {node: '>=18'}
@@ -844,6 +856,9 @@ packages:
     resolution: {integrity: sha512-KLViCmWx94zOvpLwSlsx6yOCeMhZYaxrJV87Po5k/FoZzcPSahvK5qJ7fYhS61sZi5ikmh2S3Hz55A2l3U69ng==}
     peerDependencies:
       react: ^19.0.0
+
+  jose@6.2.12:
+    resolution: {integrity: sha512-9NiFmJEex0sy2Dk58j2UGBSHgUs2ypF9eZSu4L6vjOX3Dp96Sw1F3uL+H+D1sx02jZZdzUT0HgvCy59CuvXcWw==}
 
   kleur@4.1.5:
     resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
@@ -1724,6 +1739,12 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
+  '@sharosoo/auth-client@0.3.0(hono@4.13.8)':
+    dependencies:
+      jose: 6.2.12
+    optionalDependencies:
+      hono: 4.13.8
+
   '@sindresorhus/is@7.2.0': {}
 
   '@speed-highlight/core@1.2.24': {}
@@ -1917,6 +1938,8 @@ snapshots:
       react: 19.2.8
     transitivePeerDependencies:
       - '@types/react'
+
+  jose@6.2.12: {}
 
   kleur@4.1.5: {}
 
