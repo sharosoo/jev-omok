@@ -2,7 +2,8 @@ import type { Coord, Difficulty, LineId, MoveSource, Player, RuleSet } from "@/g
 import { analyzePoints, playable } from "./candidates";
 import { PROFILES, rng, sampleIndex } from "./difficulty";
 import { askJev, buildQuestions, buildState, isLineId, type PersonaKey } from "./jev";
-import { idx, isFork } from "./patterns";
+import { isFork } from "./patterns";
+import { nearBest, searchMoves } from "./search";
 import { fromNotation, toNotation } from "./rules";
 import type { Board, DifficultyProfile, PointAnalysis } from "./types";
 
@@ -206,56 +207,46 @@ function answersToThreat(
 }
 
 /**
- * Rejects candidates that lose outright. For each candidate the position is
- * played out one ply and the opponent is asked the same tactical questions the
- * AI asks itself: can they complete five, build an open four, fork, or run a
- * forced win by continuous fours? Anything that leaves one of those standing is
- * a losing move no matter how good its shape looks.
+ * Narrows the pool to the moves an alpha-beta search rates as near-equal.
  *
- * This is the difference between blocking an open three and blocking it on the
- * end that actually holds. Without it the engine lost half its games to a
- * club-level opponent, always to a five it had already been warned about.
- *
- * Cost is bounded deliberately: only the first `LOOKAHEAD_WIDTH` candidates are
- * checked and the refutation search is shallow, because the whole turn has to
- * fit in a Worker's CPU budget.
+ * A one-ply evaluation cannot tell blocking an open three from blocking the end
+ * that actually holds: both look like "denies an open three". That cost half
+ * the games against a club-level opponent, always to a five that had been
+ * visible for moves. The search answers it directly, and what it hands the
+ * judgment layer is a set of moves that are all tactically sound, so a style
+ * choice can never cost material.
  */
-const LOOKAHEAD_WIDTH = 8;
-const REFUTATION_DEPTH = 2;
-
-function survivingCandidates(
+function searchNarrowed(
   board: Board,
   me: Player,
   rule: RuleSet,
   pool: readonly PointAnalysis[],
-  vcf: DecideOptions["vcf"],
-): readonly PointAnalysis[] {
-  const opponent: Player = me === 1 ? 2 : 1;
-  const safe: PointAnalysis[] = [];
-  const width = Math.min(pool.length, LOOKAHEAD_WIDTH);
-
-  for (let i = 0; i < width; i++) {
-    const candidate = pool[i] as PointAnalysis;
-    const cell = idx(candidate.coord.x, candidate.coord.y);
-    board[cell] = me;
-
-    const replies = analyzePoints(board, opponent, rule).filter((p) => !p.forbidden);
-    const immediate = replies.some(
-      (p) => p.offense.counts.five > 0 || p.offense.counts.openFour > 0 || isFork(p.offense.counts),
-    );
-    const forced = immediate ? null : vcf(board, opponent, rule, REFUTATION_DEPTH);
-
-    board[cell] = 0;
-    if (!immediate && !forced) safe.push(candidate);
-  }
-
-  // Every answer loses: the position is already lost, so keep the best-shaped
-  // move rather than returning nothing and letting the caller pick blindly.
-  return safe.length > 0 ? [...safe, ...pool.slice(width)] : pool;
+  profile: DifficultyProfile,
+): { readonly pool: readonly PointAnalysis[]; readonly nodes: number; readonly best: number } {
+  const result = searchMoves(board, me, rule, pool, {
+    depth: profile.searchDepth,
+    rootWidth: profile.rootWidth,
+    innerWidth: profile.innerWidth,
+    nodeLimit: profile.nodeLimit,
+  });
+  const survivors = nearBest(result, profile.nearBestMargin, profile.candidateLimit);
+  const ordered = survivors.map((m) => m.point);
+  return {
+    pool: ordered.length > 0 ? ordered : pool,
+    nodes: result.nodes,
+    best: result.moves[0]?.score ?? 0,
+  };
 }
 
-/** Static pick, used for the weakest level and whenever Jev is unavailable. */
-function staticPick(
+/**
+ * Picks from an already-ordered candidate list. The order is whatever produced
+ * it — the search when the level runs one, the static evaluation otherwise — so
+ * sampling weights come from rank, never from the static score. Re-weighting by
+ * static score here silently undid the search: measured over 6 games per level,
+ * `hard` went 0-3 because it kept choosing a statically pretty move the search
+ * had already rated worse.
+ */
+function pickRanked(
   candidates: readonly PointAnalysis[],
   profile: DifficultyProfile,
   next: () => number,
@@ -271,7 +262,7 @@ function staticPick(
   }
 
   const index = sampleIndex(
-    pool.map((p) => p.score),
+    pool.map((_, i) => pool.length - i),
     profile.temperature,
     next,
   );
@@ -343,13 +334,11 @@ export async function decideMove(options: DecideOptions): Promise<Decision> {
   // the judgment layer can still choose between blocking and counter-attacking.
   const answers = answersToThreat(legal, profile, next) ?? legal;
 
-  // Only the levels that are meant to read ahead pay for the refutation search;
-  // beginner and easy are supposed to miss things.
-  const pool =
-    profile.vcfDepth > 0
-      ? survivingCandidates(board, me, rule, answers, options.vcf)
-      : answers;
-  const candidates = pool.slice(0, profile.candidateLimit);
+  // Only the levels meant to read ahead pay for the search; beginner is
+  // supposed to miss things.
+  const searched =
+    profile.searchDepth > 0 ? searchNarrowed(board, me, rule, answers, profile) : null;
+  const candidates = (searched?.pool ?? answers).slice(0, profile.candidateLimit);
 
   if (profile.useJev && options.jev) {
     const state = buildState(board, me, moves, candidates);
@@ -384,7 +373,7 @@ export async function decideMove(options: DecideOptions): Promise<Decision> {
       };
     }
 
-    const pick = staticPick(candidates, profile, next);
+    const pick = pickRanked(candidates, profile, next);
     return {
       move: pick.coord,
       source: "engine_fallback",
@@ -395,7 +384,7 @@ export async function decideMove(options: DecideOptions): Promise<Decision> {
     };
   }
 
-  const pick = staticPick(candidates, profile, next);
+  const pick = pickRanked(candidates, profile, next);
   return {
     move: pick.coord,
     source: "engine_fallback",

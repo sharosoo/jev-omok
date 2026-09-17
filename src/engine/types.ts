@@ -53,6 +53,18 @@ export interface Position {
 export interface DifficultyProfile {
   readonly candidateLimit: number;
   readonly vcfDepth: number;
+  /** Alpha-beta depth in plies. 0 disables the search for this level. */
+  readonly searchDepth: number;
+  /** Candidates examined at the search root, and at deeper plies. */
+  readonly rootWidth: number;
+  readonly innerWidth: number;
+  /** Node ceiling so a pathological position cannot blow the CPU budget. */
+  readonly nodeLimit: number;
+  /**
+   * How far below the best search score a move may sit and still be offered to
+   * the judgment layer. Larger values buy style at the cost of strength.
+   */
+  readonly nearBestMargin: number;
   /** Probability the AI notices and takes an immediate five. */
   readonly takeFive: number;
   /** Probability the AI blocks an opponent four or open four. */

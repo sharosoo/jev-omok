@@ -13,6 +13,7 @@ how it was checked.
 | Rules, notation, history validation | `src/engine/rules.ts` | 11 unit tests: five-or-more, diagonals, 33 금수, illegal histories |
 | Candidate generation and static eval | `src/engine/candidates.ts` | 1 unit test (radius, emptiness, ordering) + full games |
 | VCF search | `src/engine/vcf.ts` | 3 unit tests incl. board-restoration; finds open-four wins |
+| Alpha-beta search + incremental eval | `src/engine/search.ts`, `src/engine/evaluate.ts` | 11 unit tests incl. the delta-eval identity, mate ordering, node ceiling; 6 games/level vs a club baseline |
 | Difficulty knobs | `src/engine/difficulty.ts` | temperature reshaping observed on live distributions |
 | Jev adapter, annotation, parsing | `src/engine/jev.ts` | ~90 live calls; 20/21 on the forced-position suite |
 | Decision pipeline | `src/engine/decide.ts` | 7 ladder tests; AI wins a full game in 28 plies |
@@ -23,7 +24,7 @@ how it was checked.
 | Move API client | `src/lib/api.ts` | 10 unit tests (`src/lib/api.test.ts`): one retry on 5xx/network, no retry on 4xx or timeout, `ErrorResponse` surfaced, off-contract payloads rejected by the guard + browser: retry recovers the turn |
 | App shell and HUD | `app/**`, `src/components/hud/**` | browser at 1366px and 390px: turn/thinking, AI line + source badge, danger meter (`null` renders empty, not 0), controls, 기보 notation, game-over panel |
 
-Engine suite: **29 tests passing**, 175 ms. Frontend suite: **16 tests passing**, 1.3 s.
+Engine suite: **56 tests passing**, 1.4 s. Frontend suite: **16 tests passing**, 1.3 s.
 
 ## In progress
 
@@ -47,7 +48,7 @@ Engine suite: **29 tests passing**, 175 ms. Frontend suite: **16 tests passing**
 | Not built | Why | Cost to add later |
 | --- | --- | --- |
 | Renju rules (asymmetric 33/44/overline for black) | confuses casual players; `freestyle` + symmetric `double_three_ban` cover the audience | one `RuleSet` value + one predicate in `rules.ts` |
-| Alpha-beta / PVS search with a transposition table | the forced ladder plus VCF plus Jev already beats a greedy baseline; a full search would make Jev decorative | new module behind the same `decideMove` step |
+| Transposition table, iterative deepening, per-node move generation | the depth-6 search already goes 3-0-3 against the baseline at 2.1 ms/turn; per-node generation costs 0.59 ms/node and is what caps useful depth | `search.ts` would gain a Zobrist table and a cheap incremental generator |
 | VCT (victory by continuous threat) | wider tree than VCF for a casual opponent | same shape as `vcf.ts` |
 | 26-opening book | a real book needs the 8-fold symmetry canonicalisation to be worth the bytes | `openingMove` is already isolated |
 | D1 game archive, replay URLs | no product need yet; the Worker is stateless and the client persists locally | one table, one insert at game end |

@@ -147,24 +147,44 @@ purely reactive game. Measured, against a greedy baseline opponent:
 Blocking is one legal answer to a three; a four of our own is another, and it
 seizes the tempo. Step 10 exists so the engine can find that.
 
-### Refutation filter
+### Search
 
-Steps 10-11 alone still lost half the games against a club-level baseline (a
-baseline running the same forced ladder plus a greedy static pick), always to a
-five that had been visible for several moves. The cause was that nothing checked
-whether a candidate *holds*: blocking one end of an open three and blocking the
-end that survives look identical to a 1-ply evaluation, and Jev's confidence on
-quiet moves sits around 0.3, so the choice was close to a coin flip.
+Steps 10-11 alone lost half the games against a club-level baseline (the same
+forced ladder plus a greedy static pick), always to a five that had been visible
+for several moves. A one-ply evaluation cannot tell blocking an open three from
+blocking the end that *holds* — both read as "denies an open three" — and Jev's
+confidence on quiet moves sits near 0.3, so the choice was close to a coin flip.
 
-So before the pool reaches Jev, every candidate in the first 8 is played out one
-ply and the opponent is asked the AI's own tactical questions — five, open four,
-fork, or a shallow VCF. Candidates that leave any of those standing are dropped.
-If all of them do, the position is already lost and the best-shaped move is kept.
+So an alpha-beta search now rates the pool, and the judgment layer only ever
+sees moves the search considers near-equal. A style choice can no longer cost
+material.
 
-Cost measured on an 18-stone position: **0.65 ms per turn** for the whole
-pipeline including the filter, so it still fits the free plan's 10 ms CPU. The
-filter is gated on `vcfDepth > 0`, so beginner and easy keep missing things on
-purpose.
+Two implementation decisions keep it inside the CPU budget, both measured:
+
+| Naive | Cost | Fixed by | Cost |
+| --- | --- | --- | --- |
+| `analyzePoints` per node | 0.59 ms/node → **1377 ms** at depth 6 | reuse the root's ordered candidate list, add only forced replies | — |
+| full-board evaluation per leaf | 0.032 ms/leaf | carry the score incrementally; a placement can only change the windows through it | **2.1 ms/turn** at depth 6 |
+
+Measured per turn on a crowded position: medium (depth 4) 1.8 ms, hard (depth 6)
+2.1 ms, master (depth 6, wider) 2.1 ms. The free plan allows 10 ms.
+
+Three bugs the tests and the game runs caught, worth keeping in mind:
+
+- **Selection ignored the search.** Sampling weights came from the static score,
+  so `hard` kept choosing a statically pretty move the search had rated worse
+  (0-3 over six games). Weights now come from rank.
+- **Counter-wins were missing from forced nodes.** When the opponent made a
+  four, the pool held only the covering points, so a position where we could
+  complete five was scored as a loss. The error compounded with depth: depth 8
+  went 0-4 against a baseline depth 6 beat 3-0.
+- **Depth past 6 makes this scheme worse, not better.** The tree reuses the root
+  candidate list, and by ply 8 the refutations that matter are points the root
+  never generated. Per-node regeneration would cost 0.59 ms × 30k nodes, so
+  depth is capped at 6 and master spends its budget on width instead.
+
+Result over six games per level against the baseline: master 3-0-3, hard 3-2-1,
+medium 1-1-4. Before the search: roughly half of all games lost at every level.
 
 ---
 
