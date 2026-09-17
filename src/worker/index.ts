@@ -348,6 +348,13 @@ app.get("/pvp/:code", (c) => {
 });
 
 /*
+ * An unknown `/api/*` path is a client bug, so answer it as one. Without this
+ * it fell through to the catch-all and a caller expecting JSON got the SPA's
+ * HTML with a 200.
+ */
+app.all("/api/*", (c) => c.json({ error: "not_found" }, 404));
+
+/*
  * `run_worker_first` is scoped to API and dynamic PvP paths in wrangler.jsonc.
  * This catch-all also keeps `wrangler dev` serving the exported site.
  */
