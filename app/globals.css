@@ -22,6 +22,8 @@
   --radius: 10px;
   --gap: 0.75rem;
   --panel-width: 22rem;
+  --header-h: 3.25rem;
+  --page-width: 62rem;
 }
 
 *,
@@ -56,12 +58,121 @@ select {
   outline-offset: 2px;
 }
 
+a {
+  color: inherit;
+}
+
+/* ---------- app shell ---------- */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app__header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 0 0 var(--header-h);
+  height: var(--header-h);
+  padding: 0 1.1rem;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--line);
+}
+
+/* Every screen sizes against this box, never against the viewport, because the
+ * header is above it on every route. */
+.app__main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.brand {
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.nav {
+  display: flex;
+  gap: 0.15rem;
+  margin-right: auto;
+}
+
+.nav__link {
+  padding: 0.3rem 0.6rem;
+  color: var(--text-dim);
+  font-size: 0.86rem;
+  text-decoration: none;
+  border-radius: 7px;
+}
+
+.nav__link:hover {
+  color: var(--text);
+  background: var(--bg-sunken);
+}
+
+/* ---------- account control ---------- */
+
+.auth {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Holds the row's height while the token store is still being read. */
+.auth--pending {
+  width: 7rem;
+  height: 1.9rem;
+}
+
+.auth__guest {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+.auth__me {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 12rem;
+  font-size: 0.86rem;
+  text-decoration: none;
+}
+
+.auth__initial {
+  display: grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.auth__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth__failed {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+
 /* ---------- layout ---------- */
 
 .stage {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--panel-width);
-  height: 100dvh;
+  height: 100%;
 }
 
 .stage__board {
@@ -364,6 +475,317 @@ select {
   cursor: not-allowed;
 }
 
+/* Inside a header or a stat row the button is content-sized, not a flex peer
+ * of the HUD's equal-width action pair. */
+.button--compact {
+  flex: 0 0 auto;
+  padding: 0.34rem 0.66rem;
+  font-size: 0.8rem;
+}
+
+/* ---------- panels and pages ---------- */
+
+.panel {
+  padding: 1.1rem 1.2rem 1.25rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.panel--prompt {
+  max-width: 34rem;
+}
+
+.panel__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.02rem;
+}
+
+.panel__body {
+  margin: 0 0 1rem;
+  color: var(--text-dim);
+  font-size: 0.88rem;
+}
+
+.panel .button {
+  flex: 0 0 auto;
+}
+
+.page {
+  width: 100%;
+  max-width: var(--page-width);
+  margin: 0 auto;
+  padding: 1.6rem 1.2rem 3rem;
+}
+
+.page--center {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  min-height: 0;
+}
+
+.page__title {
+  margin: 0 0 1.2rem;
+  font-size: 1.35rem;
+}
+
+.page__waiting {
+  margin: 0;
+  color: var(--text-dim);
+}
+
+/* Reserves the first screenful while /api/me is in flight; an empty box beats
+ * a spinner that outlives the request. */
+.page__pending {
+  min-height: 12rem;
+}
+
+/* ---------- landing ---------- */
+
+.landing {
+  width: 100%;
+  max-width: var(--page-width);
+  /* `auto` on all sides: centred while the screen has room to spare — the
+   * leaderboard is absent until matches exist — and pinned to the top once the
+   * content outgrows it. */
+  margin: auto;
+  padding: 2rem 1.2rem 3.5rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 15rem;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.hero__title {
+  margin: 0;
+  font-size: 2.1rem;
+  letter-spacing: -0.02em;
+}
+
+.hero__tagline {
+  margin: 0.55rem 0 0;
+  max-width: 32rem;
+  color: var(--text-dim);
+}
+
+.hero__auth {
+  margin-top: 1.1rem;
+}
+
+.motif {
+  width: 100%;
+  height: auto;
+  background: radial-gradient(circle at 50% 45%, #16202e 0%, #0a0f16 75%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.motif__grid line {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+
+.motif__stone--black {
+  fill: #05070b;
+  stroke: var(--line-strong);
+}
+
+.motif__stone--white {
+  fill: var(--human);
+}
+
+.entries {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--gap);
+  margin: 2.2rem 0 0;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.05rem 1.15rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  text-decoration: none;
+}
+
+.entry:hover {
+  border-color: var(--accent);
+  background: #14202f;
+}
+
+.entry__label {
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
+.entry__desc {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+/* ---------- leaderboard ---------- */
+
+.ranks {
+  margin-top: 2.4rem;
+}
+
+.ranks__caption {
+  margin: 0 0 0.6rem;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+
+.ranks__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--bg-sunken);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.ranks__item {
+  display: grid;
+  grid-template-columns: 1.8rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.ranks__item + .ranks__item {
+  border-top: 1px solid rgba(30, 42, 58, 0.6);
+}
+
+.ranks__place {
+  color: var(--text-dim);
+  text-align: right;
+  font-weight: 700;
+}
+
+.ranks__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranks__score {
+  color: var(--text-dim);
+}
+
+/* ---------- player record ---------- */
+
+.stats__who {
+  margin: 0 0 0.7rem;
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+
+.stats__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: var(--gap);
+  margin: 0;
+}
+
+.stat {
+  padding: 0.7rem 0.8rem 0.8rem;
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.stat dt {
+  color: var(--text-dim);
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+}
+
+.stat dd {
+  margin: 0.15rem 0 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat--strong dd {
+  color: var(--accent);
+}
+
+.matches {
+  margin-top: 2.2rem;
+}
+
+.matches__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.matches__table th {
+  padding: 0.4rem 0.55rem;
+  color: var(--text-dim);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.matches__table td {
+  padding: 0.5rem 0.55rem;
+  border-bottom: 1px solid rgba(30, 42, 58, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.matches__opponent {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matches__seat {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-right: 0.35rem;
+  background: #05070b;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+}
+
+.matches__seat[data-stone="white"] {
+  background: var(--human);
+  border-color: transparent;
+}
+
+.matches__outcome {
+  font-weight: 700;
+}
+
+.matches__outcome[data-outcome="win"] {
+  color: var(--level-0);
+}
+
+.matches__outcome[data-outcome="loss"] {
+  color: var(--level-3);
+}
+
+.matches__when {
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
 /* ---------- move record ---------- */
 
 .record {
@@ -436,7 +858,8 @@ select {
     grid-template-columns: 1fr;
     grid-template-rows: auto minmax(0, 1fr);
     height: auto;
-    min-height: 100dvh;
+    /* The header eats into the viewport on this route too. */
+    min-height: calc(100dvh - var(--header-h));
   }
 
   .stage__board {
@@ -465,5 +888,38 @@ select {
 
   .record__item {
     grid-template-columns: 1.7rem 0.8rem 1fr auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Decoration is the first thing to go when the copy needs the width. */
+  .motif {
+    display: none;
+  }
+
+  .nav__link--wide {
+    display: none;
+  }
+
+  .hero__title {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .matches__cell--wide {
+    display: none;
+  }
+
+  .auth__guest {
+    display: none;
+  }
+
+  .auth__name {
+    max-width: 6rem;
   }
 }

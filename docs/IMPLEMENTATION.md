@@ -19,12 +19,20 @@ how it was checked.
 | Decision pipeline | `src/engine/decide.ts` | 7 ladder tests; AI wins a full game in 28 plies |
 | Worker API | `src/worker/index.ts` | `/api/health` + complete game played over HTTP |
 | Korean copy | `src/lib/lines.ts` | composed by the naturalizer agent, all HUD keys present |
-| Deploy config | `wrangler.jsonc`, `next.config.ts` | `wrangler dev` boots with assets + secret bindings |
+| Deploy config | `wrangler.jsonc`, `next.config.ts` | `wrangler dev` boots with assets, secret, DO and D1 bindings |
+| PvP wire contract | `src/game/realtime.ts` | consumed unchanged by the room, the lobby, the socket client and the store |
+| Match room (authoritative) | `src/worker/room.ts` | 17 protocol assertions in `scripts/test-pvp.mjs` against `wrangler dev` |
+| Matchmaking lobby | `src/worker/lobby.ts` | FIFO seats, tickets and reserved identities asserted in the same script |
+| Match records and stats | `migrations/0001_matches.sql`, D1 `DB` binding | finished guest match read back from local D1; `player_stats` correctly empty for guests |
+| Auth (worker side) | `src/worker/auth.ts`, `src/worker/index.ts` | `/api/me` 401 guest, `/api/players/:id` 404 unknown, `/api/leaderboard` 200 |
+| Auth (browser side) | `src/lib/auth.ts` | 3 tests incl. the open-redirect guard; authorize URL carries PKCE, resource and scopes |
+| Landing, profile, header | `app/page.tsx`, `app/profile`, `src/components/{landing,account}` | rendered in a browser; landing ships no WebGL canvas |
+| PvP screens | `app/pvp`, `src/components/pvp`, `src/store/pvp.ts`, `src/lib/realtime.ts` | 17 tests; lobby rendered in a browser; `/pvp/ABC123` serves the room shell |
 | Client game state and turn machine | `src/store/game.ts` | 6 unit tests (`src/store/game.test.ts`): undo parity, lone-stone undo, click ignored while thinking, stale reply never lands, local win with zero API calls + browser: `localStorage` restore and corrupt-value tolerance |
 | Move API client | `src/lib/api.ts` | 10 unit tests (`src/lib/api.test.ts`): one retry on 5xx/network, no retry on 4xx or timeout, `ErrorResponse` surfaced, off-contract payloads rejected by the guard + browser: retry recovers the turn |
 | App shell and HUD | `app/**`, `src/components/hud/**` | browser at 1366px and 390px: turn/thinking, AI line + source badge, danger meter (`null` renders empty, not 0), controls, 기보 notation, game-over panel |
 
-Engine suite: **56 tests passing**, 1.4 s. Frontend suite: **16 tests passing**, 1.3 s.
+Suite: **76 tests passing**, 1.4 s. Frontend suite: **16 tests passing**, 1.3 s.
 
 ## In progress
 
@@ -32,16 +40,19 @@ Engine suite: **56 tests passing**, 1.4 s. Frontend suite: **16 tests passing**,
 | --- | --- | --- |
 | 3D board scene, stone drop animation, hover ghost, win highlight | `Board3D` agent | `Board3DProps` in `src/components/board3d/Board3D.tsx` |
 
-## Remaining after the frontend lands
+## Remaining
 
-1. `pnpm build` must produce `./out` — the placeholder `out/index.html` written
-   for the `wrangler dev` smoke test gets replaced by the real export.
-2. Browser end-to-end: play a full game in a real tab, confirm the drop
-   animation, the danger meter tracking `danger`, the AI line changing with the
-   position, undo, difficulty switching, and the win highlight.
-3. `wrangler secret put TYPESAFE_API_KEY`, then `pnpm deploy`, then verify
-   `https://omok.sharosoo.com/api/health` returns `{"jev":true}` and play one
-   game against production.
+1. Register the OIDC client so sign-in actually works. The provider patch is
+   committed in `sharosoo-world` on branch `feat/omok-oidc-client` (audience
+   `omok`, scopes `omok:read`/`omok:write`, clients `omok-web` and
+   `omok-web-dev`). Applying it means deploying `auth.sharosoo.com` and seeding
+   its D1 — shared infrastructure, so it waits for an explicit go.
+2. Apply the match schema to remote D1 and deploy:
+   `pnpm wrangler d1 migrations apply jev-omok --remote` then `pnpm run deploy`.
+   The deploy carries DO migration tag `v1` (`new_sqlite_classes`), which is
+   append-only — never edit that entry afterwards.
+3. Play one real PvP match against production from two browsers and confirm a
+   `matches` row plus two `player_stats` upserts for signed-in players.
 
 ## Deliberately not built
 
@@ -51,9 +62,8 @@ Engine suite: **56 tests passing**, 1.4 s. Frontend suite: **16 tests passing**,
 | Transposition table, iterative deepening, per-node move generation | the depth-6 search already goes 3-0-3 against the baseline at 2.1 ms/turn; per-node generation costs 0.59 ms/node and is what caps useful depth | `search.ts` would gain a Zobrist table and a cheap incremental generator |
 | VCT (victory by continuous threat) | wider tree than VCF for a casual opponent | same shape as `vcf.ts` |
 | 26-opening book | a real book needs the 8-fold symmetry canonicalisation to be worth the bytes | `openingMove` is already isolated |
-| D1 game archive, replay URLs | no product need yet; the Worker is stateless and the client persists locally | one table, one insert at game end |
-| Accounts | no per-user state to protect | `@sharosoo/auth-client` + an `omok` audience in `sharosoo-world` |
-| Durable Objects / multiplayer | single-player vs AI | DO per room + WebSocket |
+| Spectator-only rooms, tournaments, rating (ELO) | the record keeps wins/losses/streaks, which is what a casual player reads; a rating needs a pool big enough to mean something | `player_stats` already carries the write path |
+| Guest match history | guests have no persistent identity; their games archive to `matches` but nothing points at them | a claim flow on first sign-in |
 
 ## Guard rails worth keeping
 

@@ -1,49 +1,46 @@
-"use client";
+import Link from "next/link";
 
-import dynamic from "next/dynamic";
-import { useEffect } from "react";
-
-import { HudPanel } from "@/components/hud/HudPanel";
-import { UI } from "@/lib/lines";
-import { useGameStore } from "@/store/game";
+import { AuthControl } from "@/components/account/AuthControl";
+import { BoardMotif } from "@/components/landing/BoardMotif";
+import { Leaderboard } from "@/components/landing/Leaderboard";
+import { APP_TITLE, UI } from "@/lib/lines";
 
 /*
- * The scene touches WebGL on import, so it must never be evaluated during the
- * static export. `ssr: false` is only legal inside a client component, which
- * is why this page is one.
+ * The entry screen, and the only one that gets to be cheap: it is a server
+ * component and it never imports the 3D scene, so `/` paints without a WebGL
+ * context, a `three` chunk, or a canvas the reader did not ask for.
  */
-const Board3D = dynamic(() => import("@/components/board3d/Board3D"), {
-  ssr: false,
-  loading: () => <div className="stage__loading" aria-hidden="true" />,
-});
 
-export default function GamePage() {
-  const board = useGameStore((state) => state.board);
-  const moves = useGameStore((state) => state.moves);
-  const winningLine = useGameStore((state) => state.status.winningLine);
-  const forbidden = useGameStore((state) => state.forbidden);
-  const interactive = useGameStore((state) => state.phase === "idle" && state.turn === "human");
-  const placeHuman = useGameStore((state) => state.placeHuman);
-  const restore = useGameStore((state) => state.restore);
+const ENTRIES = [
+  { href: "/play", ...UI.landing.entries.ai },
+  { href: "/pvp", ...UI.landing.entries.pvp },
+  { href: "/profile", ...UI.landing.entries.profile },
+] as const;
 
-  // localStorage is unreachable during the export, so resuming happens on mount.
-  useEffect(() => {
-    restore();
-  }, [restore]);
-
+export default function LandingPage() {
   return (
-    <main className="stage">
-      <section aria-label={UI.a11y.board} className="stage__board">
-        <Board3D
-          board={board}
-          forbidden={forbidden}
-          interactive={interactive}
-          lastMove={moves.at(-1) ?? null}
-          onPlace={placeHuman}
-          winningLine={winningLine}
-        />
+    <main className="landing">
+      <section className="hero">
+        <div className="hero__copy">
+          <h1 className="hero__title">{APP_TITLE}</h1>
+          <p className="hero__tagline">{UI.landing.tagline}</p>
+          <div className="hero__auth">
+            <AuthControl />
+          </div>
+        </div>
+        <BoardMotif />
       </section>
-      <HudPanel />
+
+      <nav className="entries">
+        {ENTRIES.map((entry) => (
+          <Link className="entry" href={entry.href} key={entry.href}>
+            <span className="entry__label">{entry.label}</span>
+            <span className="entry__desc">{entry.desc}</span>
+          </Link>
+        ))}
+      </nav>
+
+      <Leaderboard />
     </main>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { SiteHeader } from "@/components/account/SiteHeader";
 import { APP_DESCRIPTION, APP_TITLE } from "@/lib/lines";
 
 import "./globals.css";
@@ -29,7 +30,14 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko" className={sans.variable}>
-      <body>{children}</body>
+      <body>
+        {/* The header is part of every route, so screens size against
+          * `.app__main` rather than the viewport. */}
+        <div className="app">
+          <SiteHeader />
+          <div className="app__main">{children}</div>
+        </div>
+      </body>
     </html>
   );
 }

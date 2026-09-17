@@ -43,6 +43,14 @@ export interface RoomSnapshot {
   readonly turn: Seat | null;
   readonly players: { readonly black: PlayerInfo | null; readonly white: PlayerInfo | null };
   readonly clocks: Clocks;
+  /*
+   * Who won the match, which is not the same question as `status`. `status`
+   * comes from the board and only ever reports a five in a row; a resignation,
+   * a flag fall or an abandoned room ends the match with no five on the board
+   * at all. Overloading `status.winner` would make a reloading client claim a
+   * five that never existed, so the match result lives here.
+   */
+  readonly winner: Seat | null;
   readonly endReason: EndReason | null;
   readonly spectators: number;
 }

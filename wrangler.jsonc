@@ -7,19 +7,37 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
 
-  // The Next.js static export is served by the Assets binding. Only /api/* has
-  // to reach the Worker first; everything else is a file or the SPA fallback.
+  // API requests and dynamic PvP room URLs reach the Worker first; every other
+  // request is a static file or uses the SPA fallback.
   "assets": {
     "directory": "./out",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/pvp/*"]
   },
 
   "vars": {
+    "AUTH_BASE_URL": "https://auth.sharosoo.com",
+    "API_AUDIENCE": "https://omok.sharosoo.com",
     "JEV_MODEL": "jev-latest",
     "JEV_BASE_URL": "https://api.typesafe.ai"
   },
+  "durable_objects": {
+    "bindings": [
+      { "name": "ROOM", "class_name": "MatchRoom" },
+      { "name": "LOBBY", "class_name": "Lobby" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["MatchRoom", "Lobby"] }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "jev-omok",
+      "database_id": "1ec2eca6-4bf4-439b-bbc8-cf1aa73ac74f"
+    }
+  ],
 
   // TYPESAFE_API_KEY is a secret: `wrangler secret put TYPESAFE_API_KEY`.
   "routes": [{ "pattern": "omok.sharosoo.com", "custom_domain": true }]
